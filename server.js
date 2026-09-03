@@ -1,12 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');const bodyParser = require('body-parser');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
 // Connect to MongoDB
-const dbURL = "mongodb://AdminVD_CaviteKonek:newAdminPass@ac-jgtoefh-shard-00-00.ytgcpwu.mongodb.net:27017,ac-jgtoefh-shard-00-01.ytgcpwu.mongodb.net:27017,ac-jgtoefh-shard-00-02.ytgcpwu.mongodb.net:27017/?ssl=true&replicaSet=atlas-msug2r-shard-0&authSource=admin&appName=CaviteKonekTest";
+const dbURL = process.env.MONGODB_URI;
 
 mongoose.connect(dbURL)
     .then(() => console.log("Connected to MongoDB!"))
@@ -167,6 +167,6 @@ app.post('/create_spots', async (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
 });
