@@ -7,7 +7,6 @@ app.use(bodyParser.json());
 
 // Connect to MongoDB
 const dbURL = process.env.MONGODB_URI;
-
 mongoose.connect(dbURL)
     .then(() => console.log("Connected to MongoDB!"))
     .catch(err => console.error("Connection error:", err));
@@ -163,6 +162,48 @@ app.post('/create_spots', async (req, res) => {
     } catch (error) {
         console.error("Error creating spot",  error);
         res.status(500).json({ message: "Failed to create spot" });
+    }
+});
+
+const reviewsSchema = new mongoose.Schema({
+    name: String,
+    location: String,
+    description: String,
+    image: String
+});
+const Reviews = mongoose.model("Spot", spotSchema);
+
+app.post('/create_reviews', async (req, res) => {
+    try{
+        const{user_name, star, review_date, business_name, review_text, status} = req.body;
+
+        const newReview = new Reviews({
+            user_name,
+            stars,
+            review_date,
+            business_name,
+            review_text,
+            status: status || "pending"
+        });
+
+        await newReview.save();
+        console.log("Review is for approval ", user_name);
+        res.status(201).send();
+    } catch (error) {
+        console.error("Error creating reviews", error)
+        res.status(500).json({message: "failed to create review"})
+    }
+});
+
+
+app.get('/reviews', async (req, res) => {
+    try{
+        const reviews = await Reviews.find();
+        res.json(reviews);
+        console.log("spot sent to android");
+    } catch (error) {
+        console.error("Error fetchin reviews", error);
+        res.status(500).json({message: "server error"});
     }
 });
 
