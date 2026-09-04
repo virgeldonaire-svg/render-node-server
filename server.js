@@ -164,7 +164,7 @@ app.post('/create_spots', async (req, res) => {
         res.status(500).json({ message: "Failed to create spot" });
     }
 });
-
+// for reviews
 const reviewsSchema = new mongoose.Schema({
     name: String,
     location: String,
