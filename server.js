@@ -171,7 +171,7 @@ const reviewsSchema = new mongoose.Schema({
     description: String,
     image: String
 });
-const Reviews = mongoose.model("Spot", spotSchema);
+const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 app.post('/create_reviews', async (req, res) => {
     try{
@@ -211,3 +211,7 @@ app.get('/reviews', async (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+// git add . 
+// git commit -m "name of the update"
+// git push origin main
