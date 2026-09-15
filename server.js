@@ -207,6 +207,29 @@ app.get('/reviews', async (req, res) => {
     }
 });
 
+// Accomodation get to user
+const AccommodationsSchema = new mongoose.Schema({
+    business_name: String,
+    location: String,
+    stars: String,
+    category: String,
+    description: String,
+    image: String
+});
+const Accommodations = new mongoose.model("Accommodations", AccommodationsSchema);
+// get accommodation for tourist
+
+app.get('/accommodation', async (req, res) => {
+    try {
+        const accommodations = await Accommodations.find();
+        res.json(accommodations);
+        console.log("accommodation succesfully sent to the tourist");
+    }  catch (error) {
+        console.log("There is an error in server fetching",  error);
+        res.status(500).json({message: "server errror"});
+    }
+});
+
 // Start Server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
