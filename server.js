@@ -125,6 +125,16 @@ app.post('/createTravelPlan', async (req, res) => {
     }
 });
 
+app.get('/travelPlans', async (req, res) => {
+    try {
+        const plans = await travelPlan.find();
+        res.json(plans);
+        console.log("travel plan is sent to the user");
+    } catch (error) {
+        console.error("Error fetching travel plans", error);
+        res.status(500).json({ message: "Server error"});
+    }
+});
 
 const spotSchema = new mongoose.Schema({
     name: String,
