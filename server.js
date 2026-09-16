@@ -98,6 +98,7 @@ const travelPlanSchema = new mongoose.Schema({
     phoneNumber: String,
     name: String,
     location: String,
+    type: String,
     date: String,
     time: String,
     status: String
@@ -114,6 +115,7 @@ app.post('/createTravelPlan', async (req, res) => {
             phoneNumber: phoneNumber,
             name: name,
             location: location,
+            type: type,
             date: date,
             time: time,
             status: status
