@@ -77,9 +77,9 @@ const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 // Signin Endpoint 
 app.post('/signin', async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
     try {
-        const user = await User.findOne({ email: username, password: password });
+        const user = await User.findOne({ email: email, password: password });
         if (user) {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             user.otp = otp;
@@ -127,7 +127,7 @@ app.post('/verify-otp', async (req, res) => {
                 status: "success",
                 userData: {
                     name: user.name,
-                    phone: user.phoneNumber,
+                    email: user.email,
                     reviews: user.reviewsCount,
                     accountType: user.accountType,
                     status: user.status
