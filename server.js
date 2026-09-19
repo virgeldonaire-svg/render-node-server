@@ -14,7 +14,7 @@ mongoose.connect(dbURL)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'gachagambler777gmail.com',
+        user: 'gachagambler777@gmail.com',
         pass: 'oxthqplwryyyxliq'
     }
 });
