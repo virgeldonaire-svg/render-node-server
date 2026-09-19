@@ -93,7 +93,7 @@ app.post('/signin', async (req, res) => {
                 from: '"CaviteKonek Admin" <gachagambler777@gmail.com>',
                 to: user.email, 
                 subject: 'Login Verification Code',
-                text: 'Your verification code is: ${otp}'
+                text: 'Your verification code is: ' + otp
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
