@@ -79,7 +79,7 @@ const Reviews = mongoose.model("Reviews", reviewsSchema);
 app.post('/signin', async (req, res) => {
     const { username, password } = req.body;
     try {
-        const user = await User.findOne({ phoneNumber: username, password: password });
+        const user = await User.findOne({ email: username, password: password });
         if (user) {
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             user.otp = otp;
@@ -100,7 +100,7 @@ app.post('/signin', async (req, res) => {
             res.json({
                 status: "2fa-required",
                 message: "Please check the 2fa code to your email",
-                phone: user.phoneNumber
+                email: user.email
                 });
         } else {
             res.status(401).json({ status: "error", message: "Invalid credentials" });
@@ -111,10 +111,10 @@ app.post('/signin', async (req, res) => {
 });
 
 app.post('/verify-otp', async (req, res) => {
-    const { phone, otp } = req.body;
+    const { email, otp } = req.body;
 
     try {const user = await User.findOne({
-        phoneNumber: phone,
+        email: email,
         otp: otp,
         otpExpires: {$gt: Date.now()}
     });
