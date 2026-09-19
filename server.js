@@ -157,7 +157,11 @@ app.post('/signup', async (req, res) => {
         
         await newUser.save();
         console.log("User created: ", name);
-        res.status(201).send(); 
+        res.status(201).json({
+            status: "success",
+            message: "User created successfully",
+            token: "first account"
+        });
     } catch (error) {
         console.error("Signup error: ", error);
         res.status(500).json({ message: "Failed to save user" });
