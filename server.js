@@ -12,12 +12,17 @@ mongoose.connect(dbURL)
     .catch(err => console.error("Connection error:", err));
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure:true,
+    service: 'gmail',
     auth: {
         user: 'gachaallornothing777@gmail.com',
         pass: 'fieuigrykqoqpxbt'
+    }
+});
+transporter.verify((error, success) => {
+    if (error) {
+        console.error("SMTP Connection Error:", error);
+    } else {
+        console.log("SMTP Server is ready to take our messages");
     }
 });
 
