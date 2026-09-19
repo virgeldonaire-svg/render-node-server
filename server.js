@@ -14,7 +14,7 @@ mongoose.connect(dbURL)
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: '0gachagambler7770@gmail.com',
+        user: 'gachagambler777gmail.com',
         pass: 'oxthqplwryyyxliq'
     }
 });
@@ -77,6 +77,7 @@ const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 // Signin Endpoint 
 app.post('/signin', async (req, res) => {
+    console.log("attemp login body:", req.body)
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email: email, password: password });
