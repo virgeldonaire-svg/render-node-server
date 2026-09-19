@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
     port: 465,
     secure:true,
     auth: {
-        user: 'gachagambler777@gmail.com',
+        user: 'gachaallornothing777@gmail.com',
         pass: 'oxthqplwryyyxliq'
     }
 });
@@ -90,7 +90,7 @@ app.post('/signin', async (req, res) => {
             await user.save();
 
             const mailOptions = {
-                from: '"CaviteKonek Admin" <gachagambler777@gmail.com>',
+                from: '"CaviteKonek Admin" <gachaallornothing777@gmail.com>',
                 to: user.email, 
                 subject: 'Login Verification Code',
                 text: 'Your verification code is: ' + otp
