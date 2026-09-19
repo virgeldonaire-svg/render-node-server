@@ -12,7 +12,9 @@ mongoose.connect(dbURL)
     .catch(err => console.error("Connection error:", err));
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure:true,
     auth: {
         user: 'gachagambler777@gmail.com',
         pass: 'oxthqplwryyyxliq'
@@ -95,9 +97,11 @@ app.post('/signin', async (req, res) => {
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
-                if (error) console.log("Email error: ", info);
-                else console.log("Email sent to your email: ", info.response);
-            })
+                if (error) {
+                    console.log("Email error: ", info);
+                } else { console.log("Email sent to your email: ", info.response);
+                }
+            });
             res.json({
                 status: "2fa-required",
                 message: "Please check the 2fa code to your email",
