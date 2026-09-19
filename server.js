@@ -1,8 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');const bodyParser = require('body-parser');
+const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 app.use(bodyParser.json());
 
 // Connect to MongoDB
@@ -11,27 +11,120 @@ mongoose.connect(dbURL)
     .then(() => console.log("Connected to MongoDB!"))
     .catch(err => console.error("Connection error:", err));
 
-// User Schema
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: '0gachagambler7770@gmail.com',
+        pass: 'oxthqplwryyyxliq'
+    }
+});
+
 const userSchema = new mongoose.Schema({
     name: String,
-    phoneNumber: String,
+    email: String,
     password: String,  
     accountType: String,        
     reviewsCount: Number,
+    status: String, 
+    otp: String,
+    otpExpires: Date
+});
+
+const AccommodationsSchema = new mongoose.Schema({
+    business_name: String,
+    location: String,
+    stars: String,
+    category: String,
+    description: String,
+    image: String
+});
+
+const spotSchema = new mongoose.Schema({
+    name: String,
+    location: String,
+    description: String,
+    image: String,
+    latitude: Number,
+    longitude: Number
+});
+
+const travelPlanSchema = new mongoose.Schema({
+    email: String,
+    name: String,
+    location: String,
+    type: String,
+    date: String,
+    time: String,
     status: String
+});
+
+const reviewsSchema = new mongoose.Schema({
+    name: String,
+    location: String,
+    description: String,
+    image: String
 });
 
 const User = mongoose.model('User', userSchema);
 
-// Signin Endpoint
+const Accommodations = mongoose.model("Accommodations", AccommodationsSchema);
+
+const Spot = mongoose.model("Spot", spotSchema);
+
+const travelPlan = mongoose.model("Travel Plan", travelPlanSchema);
+
+const Reviews = mongoose.model("Reviews", reviewsSchema);
+
+// Signin Endpoint 
 app.post('/signin', async (req, res) => {
     const { username, password } = req.body;
     try {
         const user = await User.findOne({ phoneNumber: username, password: password });
         if (user) {
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            user.otp = otp;
+            user.otpExpires = Date.now() + 300000
+            await user.save();
+
+            const mailOptions = {
+                from: 'CaviteKonek Admin <0gachagambler7770@gmail.com>',
+                to: user.email, 
+                subject: 'Login Verification Code',
+                text: `Your verification code is: ${otp}`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) console.log("Email error: ", info);
+                else console.log("Email sent to your email: ", info.response);
+            })
+            res.json({
+                status: "2fa-required",
+                message: "Please check the 2fa code to your email",
+                phone: user.phoneNumber
+                });
+        } else {
+            res.status(401).json({ status: "error", message: "Invalid credentials" });
+        }
+    } catch (err) {
+        res.status(500).json({ status: "error", message: "Server error" });
+    }
+});
+
+app.post('/verify-otp', async (req, res) => {
+    const { phone, otp } = req.body;
+
+    try {const user = await User.findOne({
+        phoneNumber: phone,
+        otp: otp,
+        otpExpires: {$gt: Date.now()}
+    });
+        if (user) {
+            user.otp = null
+            user.otpExpires = null;
+            await user.save();
+
             res.json({
                 status: "success",
-                message: "Welcome back!",
                 userData: {
                     name: user.name,
                     phone: user.phoneNumber,
@@ -41,32 +134,21 @@ app.post('/signin', async (req, res) => {
                 }
             });
         } else {
-            res.status(401).json({ status: "error", message: "Invalid credentials" });
+            res.status(400).json({ status: "error", message: "Invalid or the OTP expired"});
         }
-    } catch (err) {
-        res.status(500).json({ status: "error", message: "Server error" });
+        } catch (err) {
+            res.status(500).json({ status: "error", message: "Server error"})
     }
 });
 
-// Signup Endpoint 
 app.post('/signup', async (req, res) => {
     try {
-        const { name, phoneNumber, password, accountType } = req.body;
+        const { name, email, password, accountType } = req.body;
 
         const status = (accountType === "business owner") ? "pending" : "approved";
-        /**
-         * this is a shortcut for if statement
-         * let status
-         * if (accountType === "business owner") {
-         * status = "pending";
-         * } else {
-         * status = "approved";
-         * }
-        */
-
         const newUser = new User ({
             name: name,
-            phoneNumber: phoneNumber,
+            email: email,
             password: password,
             accountType: accountType,
             reviewsCount: 0,
@@ -82,7 +164,6 @@ app.post('/signup', async (req, res) => {
     }
 });
 
-// getting user information for admin user management
 app.get('/users', async (req, res) => {
     try {
         const users = await User.find();
@@ -94,25 +175,13 @@ app.get('/users', async (req, res) => {
     }
 });
 
-const travelPlanSchema = new mongoose.Schema({
-    phoneNumber: String,
-    name: String,
-    location: String,
-    type: String,
-    date: String,
-    time: String,
-    status: String
-});
-const travelPlan = mongoose.model("travelPlan", travelPlanSchema);
-// Travel Plans Endpoint
-// Create Travel Plans Endpoint
 app.post('/createTravelPlan', async (req, res) => {
     try {
-        const {phoneNumber, name, location, date, time, status} = req.body;
+        const {email, name, location, date, time, status} = req.body;
 
         const newtravelPlan = new travelPlan({
             //phoneNumber is included to link it to a specific account
-            phoneNumber: phoneNumber,
+            email: email,
             name: name,
             location: location,
             type: type,
@@ -136,15 +205,6 @@ app.get('/travelPlans', async (req, res) => {
     }
 });
 
-const spotSchema = new mongoose.Schema({
-    name: String,
-    location: String,
-    description: String,
-    image: String
-});
-const Spot = mongoose.model("Spot", spotSchema);
-
-// Spots Endpoint
 app.get('/spots', async (req, res) => {
     try{
         const spots = await Spot.find();
@@ -156,7 +216,6 @@ app.get('/spots', async (req, res) => {
     }
 });
 
-// Create Spots Endpoint
 app.post('/create_spots', async (req, res) => {
     try {
         const{ name, location, description, image } = req.body;
@@ -176,21 +235,13 @@ app.post('/create_spots', async (req, res) => {
         res.status(500).json({ message: "Failed to create spot" });
     }
 });
-// for reviews
-const reviewsSchema = new mongoose.Schema({
-    name: String,
-    location: String,
-    description: String,
-    image: String
-});
-const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 app.post('/create_reviews', async (req, res) => {
     try{
-        const{user_name, star, review_date, business_name, review_text, status} = req.body;
+        const{name, star, review_date, business_name, review_text, status} = req.body;
 
         const newReview = new Reviews({
-            user_name,
+            name,
             stars,
             review_date,
             business_name,
@@ -207,7 +258,6 @@ app.post('/create_reviews', async (req, res) => {
     }
 });
 
-
 app.get('/reviews', async (req, res) => {
     try{
         const reviews = await Reviews.find();
@@ -218,18 +268,6 @@ app.get('/reviews', async (req, res) => {
         res.status(500).json({message: "server error"});
     }
 });
-
-// Accomodation get to user
-const AccommodationsSchema = new mongoose.Schema({
-    business_name: String,
-    location: String,
-    stars: String,
-    category: String,
-    description: String,
-    image: String
-});
-const Accommodations = new mongoose.model("Accommodations", AccommodationsSchema);
-// get accommodation for tourist
 
 app.get('/accommodation', async (req, res) => {
     try {
@@ -242,7 +280,6 @@ app.get('/accommodation', async (req, res) => {
     }
 });
 
-// Start Server
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
