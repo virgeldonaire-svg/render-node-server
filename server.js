@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
+const { Resend } =  require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
@@ -94,20 +96,13 @@ app.post('/signin', async (req, res) => {
             user.otpExpires = Date.now() + 300000
             await user.save();
 
-            const mailOptions = {
-                from: '"CaviteKonek Admin" <gachaallornothing777@gmail.com>',
-                to: user.email, 
+            await resend.emails.send({
+                from: 'CaviteKonek <onboarding@resend.dev>', // Keep onboarding@resend.dev for testing tier
+                to: [user.email],
                 subject: 'Login Verification Code',
-                text: 'Your verification code is: ' + otp
-            };
-
-            transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                    console.log("Email error: ", error);
-                } else { 
-                    console.log("Email sent to your email: ", info.response);
-                }
+                html: `<p>Hello ${user.name},</p><p>Your verification code is: <strong>${otp}</strong>. It will expire in 5 minutes.</p>`
             });
+
             res.json({
                 status: "2fa-required",
                 message: "Please check the 2fa code to your email",
