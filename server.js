@@ -1,9 +1,6 @@
-require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');const bodyParser = require('body-parser');
-const nodemailer = require('nodemailer');
-const { Resend } =  require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY || 're_D453FDKG_J4nfJN8bK2auuJ1zKiZoLaEY');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
@@ -14,22 +11,8 @@ mongoose.connect(dbURL)
     .then(() => console.log("Connected to MongoDB!"))
     .catch(err => console.error("Connection error:", err));
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'gachaallornothing777@gmail.com',
-        pass: 'fieuigrykqoqpxbt'
-    }
-});
-transporter.verify((error, success) => {
-    if (error) {
-        console.error("SMTP Connection Error:", error);
-    } else {
-        console.log("SMTP Server is ready to take our messages");
-    }
-});
-
 const userSchema = new mongoose.Schema({
+    firebaseUid: String,
     name: String,
     email: String,
     password: String,  
@@ -85,75 +68,13 @@ const travelPlan = mongoose.model("Travel Plan", travelPlanSchema);
 
 const Reviews = mongoose.model("Reviews", reviewsSchema);
 
-// Signin Endpoint 
-app.post('/signin', async (req, res) => {
-    console.log("attemp login body:", req.body)
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email: email, password: password });
-        if (user) {
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            user.otp = otp;
-            user.otpExpires = Date.now() + 300000
-            await user.save();
-
-            await resend.emails.send({
-                from: 'CaviteKonek <onboarding@resend.dev>', // Keep onboarding@resend.dev for testing tier
-                to: [user.email],
-                subject: 'Login Verification Code',
-                html: `<p>Hello ${user.name},</p><p>Your verification code is: <strong>${otp}</strong>. It will expire in 5 minutes.</p>`
-            });
-
-            res.json({
-                status: "2fa-required",
-                message: "Please check the 2fa code to your email",
-                email: user.email
-                });
-        } else {
-            res.status(401).json({ status: "error", message: "Invalid credentials" });
-        }
-    } catch (err) {
-        res.status(500).json({ status: "error", message: "Server error" });
-    }
-});
-
-app.post('/verify-otp', async (req, res) => {
-    const { email, otp } = req.body;
-
-    try {const user = await User.findOne({
-        email: email,
-        otp: otp,
-        otpExpires: {$gt: Date.now()}
-    });
-        if (user) {
-            user.otp = null
-            user.otpExpires = null;
-            await user.save();
-
-            res.json({
-                status: "success",
-                userData: {
-                    name: user.name,
-                    email: user.email,
-                    reviews: user.reviewsCount,
-                    accountType: user.accountType,
-                    status: user.status
-                }
-            });
-        } else {
-            res.status(400).json({ status: "error", message: "Invalid or the OTP expired"});
-        }
-        } catch (err) {
-            res.status(500).json({ status: "error", message: "Server error"})
-    }
-});
-
 app.post('/signup', async (req, res) => {
     try {
-        const { name, email, password, accountType } = req.body;
+        const { uid, name, email, password, accountType } = req.body;
 
         const status = (accountType === "business owner") ? "pending" : "approved";
         const newUser = new User ({
+            firebaseUid: uid,
             name: name,
             email: email,
             password: password,
@@ -188,20 +109,17 @@ app.get('/users', async (req, res) => {
 
 app.post('/createTravelPlan', async (req, res) => {
     try {
-        const {email, name, location, date, time, status} = req.body;
+        const {email, name, location, type, date, time, status} = req.body;
 
         const newtravelPlan = new travelPlan({
             //phoneNumber is included to link it to a specific account
-            email: email,
-            name: name,
-            location: location,
-            type: type,
-            date: date,
-            time: time,
-            status: status
+            email, name, location, type, date, time, status
         });
+        await newtravelPlan.save();
+        res.status(201).json({ status: "success" });
     } catch (error) {
-        console.error("Error fetchin Travel plans", error);
+        console.error("Error in creating Travel Plan", error);
+        res.status(500).json({ message: "Server error" });
     }
 });
 
