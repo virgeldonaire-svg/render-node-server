@@ -1,8 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
 const { Resend } =  require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_D453FDKG_J4nfJN8bK2auuJ1zKiZoLaEY');
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
