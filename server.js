@@ -12,68 +12,7 @@ mongoose.connect(dbURL)
     .then(() => console.log("Connected to MongoDB!"))
     .catch(err => console.error("Connection error:", err));
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS 
-    }
-});
-
-app.post('/signing', async (req, res) => {
-    try {
-        const { email } = req.body;
-        const user = await User.findOne({
-            email: email.toLowerCase()
-        });
-        if (!user) {
-            return res.status(404).json({ status: "error", massage: "User not found"})
-        }
-        if (user.accountType === "business owner" && user.status === "pending") {
-            return res.status(403).json({ status: "error", message: "Account pending admin approval" });
-        }
-
-        // Generate and save 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        user.otp = otp;
-        user.otpExpires = Date.now() + 600000; // 10 mins
-        await user.save();
-
-        // Send the email
-        await transporter.sendMail({
-            from: '"CaviteKonek" <your-email@gmail.com>',
-            to: email,
-            subject: 'Your 2FA Login Code',
-            text: `Your OTP is: ${otp}`
-        });
-
-        res.status(200).json({ status: "2fa-required" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-app.post('/verifyOtp', async (req, res) => {
-    try {const {email, otp } = req.body;
-
-    if (!user) {
-            return res.status(400).json({ status: "error", message: "Invalid OTP" });
-        }
-        user.otp = undefined;
-        await user.save();
-
-        res.status(200).json({
-            status: "success",
-            userData: {
-                name: user.name,
-                email: user.email,
-                accountType: user.accountType
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ message: "Verification failed" })
-    }
-});
+   
 const userSchema = new mongoose.Schema({
     firebaseUid: String,
     name: String,
@@ -156,6 +95,32 @@ app.post('/signup', async (req, res) => {
     } catch (error) {
         console.error("Signup error: ", error);
         res.status(500).json({ message: "Failed to save user" });
+    }
+});
+
+app.post('/signIn', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({
+            email: email.toLowerCase().trim()
+        });
+        if (!user) {
+            console.log("User not found for email: ", email);
+            return res.status(404).json({ status: "error", message: "User not found"});
+        }
+        res.status(200).json({
+            status: "success",
+            userData: {
+                name: user.name,
+                email: user.email,
+                accountType: user.accountType,
+                reviewsCount: user.reviewsCount || 0,
+                status: user.status
+            }
+        });
+    } catch (error) {
+        console.error("Database fetch error:", error);
+        res.status(500).json({ message: "Server error during profile fetch" });
     }
 });
 
