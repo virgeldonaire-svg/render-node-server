@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const nodemailer = require('nodemailer');
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
@@ -17,6 +16,7 @@ const userSchema = new mongoose.Schema({
     firebaseUid: String,
     name: String,
     email: String,
+    phoneNumber: String,
     password: String,  
     accountType: String,        
     reviewsCount: Number,
@@ -72,13 +72,14 @@ const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 app.post('/signup', async (req, res) => {
     try {
-        const { uid, name, email, password, accountType } = req.body;
+        const { uid, name, email, phoneNumber, password, accountType } = req.body;
 
         const status = (accountType === "business owner") ? "pending" : "approved";
         const newUser = new User ({
             firebaseUid: uid,
             name: name,
             email: email,
+            phoneNumber: phoneNumber,
             password: password,
             accountType: accountType,
             reviewsCount: 0,
