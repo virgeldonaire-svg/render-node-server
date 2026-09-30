@@ -125,6 +125,34 @@ app.post('/signIn', async (req, res) => {
     }
 });
 
+app.post('/updateUser', async (req, res) => {
+    try {
+        // Match the field names coming from your Java Users class
+        const { uid, username, phoneNumber, accountType } = req.body;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { phoneNumber: phoneNumber }, 
+            { 
+                $set: { 
+                    firebaseUid: uid, // Make sure this matches your Schema (firebaseUid)
+                    status: "approved", 
+                    accountType: accountType 
+                } 
+            },
+            { new: true } // THIS IS CRITICAL: It returns the user object to Android
+        );
+
+        if (updatedUser) {
+            // Return the full user object so Android can fetch the profile info
+            res.status(200).json(updatedUser); 
+        } else {
+            res.status(404).json({ message: "User not found in MongoDB" });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 app.get('/users', async (req, res) => {
     try {
         const users = await User.find();
