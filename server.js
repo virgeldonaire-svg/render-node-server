@@ -204,13 +204,15 @@ app.get('/spots', async (req, res) => {
 
 app.post('/create_spots', async (req, res) => {
     try {
-        const{ name, location, description, image } = req.body;
+        const{ name, location, description, image, latitude, longitude} = req.body;
 
         const newSpot = new Spot({
             name: name,
             location: location,
             description: description,
-            image: image
+            image: image,
+            latitude: latitude,
+            longitude: longitude
         });
 
         await newSpot.save();
