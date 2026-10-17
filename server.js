@@ -36,6 +36,17 @@ const AccommodationsSchema = new mongoose.Schema({
     image: String
 });
 
+const reservationsSchema = new mongoose.Schema({
+    business_name: String,
+    user_name: String,
+    uid: String,
+    reservation_date: String,
+    reservation_time: String,
+    number_of_guest: Int16Array,
+    special_request: String,
+    estimated_price: String
+})
+
 const spotSchema = new mongoose.Schema({
     name: String,
     location: String,
@@ -65,6 +76,8 @@ const reviewsSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 const Accommodations = mongoose.model("Accommodations", AccommodationsSchema);
+
+const reservations = mongoose.model("Reservations", reservationsSchema);
 
 const Spot = mongoose.model("Spot", spotSchema);
 
@@ -266,6 +279,26 @@ app.get('/accommodation', async (req, res) => {
         console.log("accommodation succesfully sent to the tourist");
     }  catch (error) {
         console.log("There is an error in server fetching",  error);
+        res.status(500).json({message: "server errror"});
+    }
+});
+
+app.post('/reservations', async (req, res) => {
+    try {
+        const{business_name, user_name, uid, reservation_date, reservation_time, number_of_guest, special_request, estimated_price} = req.body;
+
+        const newReservation = new reservations({
+            business_name,
+            user_name,
+            uid,
+            reservation_date,
+            reservation_time,
+            number_of_guest,
+            special_request,
+            estimated_price
+        });
+    } catch (error) {
+        console.log("There is an error in saving the reservation in database", error);
         res.status(500).json({message: "server errror"});
     }
 });
