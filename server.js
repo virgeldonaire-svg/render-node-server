@@ -297,6 +297,9 @@ app.post('/reservations', async (req, res) => {
             special_request,
             estimated_price
         });
+        await newReview.save();
+        console.log("reservation sent waiting for response ", user_name);
+        res.status(201).send();
     } catch (error) {
         console.log("There is an error in saving the reservation in database", error);
         res.status(500).json({message: "server errror"});
