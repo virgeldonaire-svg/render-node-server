@@ -42,7 +42,7 @@ const reservationsSchema = new mongoose.Schema({
     uid: String,
     reservation_date: String,
     reservation_time: String,
-    number_of_guest: Int16Array,
+    number_of_guest: Number,
     special_request: String,
     estimated_price: String
 })
