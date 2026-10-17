@@ -297,7 +297,7 @@ app.post('/reservations', async (req, res) => {
             special_request,
             estimated_price
         });
-        await newReview.save();
+        await newReservation.save();
         console.log("reservation sent waiting for response ", user_name);
         res.status(201).send();
     } catch (error) {
