@@ -118,27 +118,41 @@ app.post('/signIn', async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({
-            email: email.toLowerCase().trim()
+            $or: [
+                { email: req.body.email },
+                { phoneNumber: req.body.email } 
+            ]
         });
+
         if (!user) {
+            if (email.startWith(+63)) {
+                const altPhone = "0" +email.substring(3);
+                const altUser = await User.findOne({ phoneNumber: altPhone });
+                if (altUser) {
+                    return sendSuccessResponse(res, altUser);
+                }
+            }
             console.log("User not found for email: ", email);
             return res.status(404).json({ status: "error", message: "User not found"});
         }
-        res.status(200).json({
-            status: "success",
-            userData: {
-                name: user.name,
-                email: user.email,
-                accountType: user.accountType,
-                reviewsCount: user.reviewsCount || 0,
-                status: user.status
-            }
-        });
+        sendSuccessResponse(res, user);
     } catch (error) {
         console.error("Database fetch error:", error);
         res.status(500).json({ message: "Server error during profile fetch" });
     }
 });
+function sendSuccessResponse(res, user) {
+    res.status(200).json({
+        status: "success",
+        userData: {
+            name: user.name,
+            email: user.email,
+            accountType: user.accountType,
+            reviews: user.reviewsCount || 0,
+            status: user.status
+        }
+    });
+}
 
 app.post('/updateUser', async (req, res) => {
     try {
