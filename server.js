@@ -73,6 +73,21 @@ const reviewsSchema = new mongoose.Schema({
     image: String
 });
 
+const BusinessSchema = new mongoose.Schema({
+    business_name: String,
+    photo_logo: String,
+    photos: [String],
+    location: String,
+    latitude: String,
+    longitude: String,
+    service: [String],
+    opening_hours: [String],
+    type_of_business: String,
+    description: String,
+    document: String,
+    status: {type: String, default: 'Pending'}
+});
+
 const User = mongoose.model('User', userSchema);
 
 const Accommodations = mongoose.model("Accommodations", AccommodationsSchema);
@@ -84,6 +99,8 @@ const Spot = mongoose.model("Spot", spotSchema);
 const travelPlan = mongoose.model("Travel Plan", travelPlanSchema);
 
 const Reviews = mongoose.model("Reviews", reviewsSchema);
+
+const Business = mongoose.model("Business", BusinessSchema)
 
 app.post('/signup', async (req, res) => {
     try {
@@ -319,6 +336,18 @@ app.post('/reservations', async (req, res) => {
         res.status(500).json({message: "server errror"});
     }
 });
+
+app.post('/register_business', async (req, res) => {
+    try {
+        const newBusiness = new Business(req.body);
+        await newBusiness.save();
+        res.status(201).json({ message: "Business registration successfully"});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: "server error"});
+    }
+});
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
