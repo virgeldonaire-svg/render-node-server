@@ -74,6 +74,7 @@ const reviewsSchema = new mongoose.Schema({
 });
 
 const BusinessSchema = new mongoose.Schema({
+    firebaseUid: String,
     business_name: String,
     photo_logo: String,
     photos: [String],
@@ -357,5 +358,5 @@ app.listen(PORT, '0.0.0.0', () => {
 
 // quickref
 // git add server.js 
-// git commit -m "name of the update"
+// git commit -m "
 // git push origin main
