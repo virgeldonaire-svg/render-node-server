@@ -85,7 +85,9 @@ const BusinessSchema = new mongoose.Schema({
     type_of_business: String,
     description: String,
     document: String,
-    status: {type: String, default: 'Pending'}
+    status: {type: String, default: 'Pending'},
+    stars: { type: Number, default: 0 }, 
+    reviews_count: { type: Number, default: 0 }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -353,6 +355,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
-// git add . 
+// quickref
+// git add server.js 
 // git commit -m "name of the update"
 // git push origin main
