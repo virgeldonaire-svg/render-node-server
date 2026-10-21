@@ -65,6 +65,7 @@ const reviewsSchema = new mongoose.Schema({
 });
 
 const BusinessSchema = new mongoose.Schema({
+    owner_name: String,
     firebaseUid: String,
     business_name: String,
     photo_logo: String,
