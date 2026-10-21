@@ -44,7 +44,8 @@ const spotSchema = new mongoose.Schema({
     description: String,
     image: String,
     latitude: Number,
-    longitude: Number
+    longitude: Number,
+    opening_hours: [String]
 });
 
 const travelPlanSchema = new mongoose.Schema({
@@ -243,17 +244,7 @@ app.get('/spots', async (req, res) => {
 
 app.post('/create_spots', async (req, res) => {
     try {
-        const{ name, location, description, image, latitude, longitude} = req.body;
-
-        const newSpot = new Spot({
-            name: name,
-            location: location,
-            description: description,
-            image: image,
-            latitude: latitude,
-            longitude: longitude
-        });
-
+        const newSpot = new Spot(req.body);
         await newSpot.save();
         console.log("Spot created: ", name)
         res.status(201).send();
