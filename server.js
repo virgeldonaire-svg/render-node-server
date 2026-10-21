@@ -27,15 +27,6 @@ const userSchema = new mongoose.Schema({
     otpExpires: Date
 });
 
-const AccommodationsSchema = new mongoose.Schema({
-    business_name: String,
-    location: String,
-    stars: String,
-    category: String,
-    description: String,
-    image: String
-});
-
 const reservationsSchema = new mongoose.Schema({
     business_name: String,
     user_name: String,
@@ -92,8 +83,6 @@ const BusinessSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
-
-const Accommodations = mongoose.model("Accommodations", AccommodationsSchema);
 
 const reservations = mongoose.model("Reservations", reservationsSchema);
 
@@ -308,8 +297,8 @@ app.get('/reviews', async (req, res) => {
 
 app.get('/accommodation', async (req, res) => {
     try {
-        const accommodations = await Accommodations.find();
-        res.json(accommodations);
+        const business = await Business.find();
+        res.json(business);
         console.log("accommodation succesfully sent to the tourist");
     }  catch (error) {
         console.log("There is an error in server fetching",  error);
