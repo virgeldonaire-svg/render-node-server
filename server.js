@@ -246,7 +246,6 @@ app.post('/create_spots', async (req, res) => {
     try {
         const newSpot = new Spot(req.body);
         await newSpot.save();
-        console.log("Spot created: ", name)
         res.status(201).send();
     } catch (error) {
         console.error("Error creating spot",  error);
