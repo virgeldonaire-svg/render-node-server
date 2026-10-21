@@ -351,6 +351,16 @@ app.post('/register_business', async (req, res) => {
     }
 });
 
+app.post('/update_business_status', async (req, res) => {
+    try {const { name, status } = req.query;
+        // Find by name and update the status field
+        await Business.findOneAndUpdate({ business_name: name }, { status: status });
+        res.status(200).send("Status updated");
+    } catch (error) {
+        res.status(500).send("Error updating status");
+    }
+});
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
