@@ -89,7 +89,7 @@ const reviewSchema = new mongoose.Schema({
     user_name: String,
     user_uid: String,
     review_date: String,
-    rating: Float16Array,
+    rating: Number,
     comment: String
 });
 
