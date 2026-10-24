@@ -88,6 +88,7 @@ const reviewSchema = new mongoose.Schema({
     business_name: String,
     user_name: String,
     user_uid: String,
+    review_date: String,
     rating: Float16Array,
     comment: String
 });
