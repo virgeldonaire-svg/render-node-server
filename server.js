@@ -84,6 +84,14 @@ const BusinessSchema = new mongoose.Schema({
     reviews_count: { type: Number, default: 0 }
 });
 
+const reviewSchema = new mongoose.Schema({
+    business_name: String,
+    user_name: String,
+    user_uid: String,
+    rating: Float16Array,
+    comment: String
+});
+
 const User = mongoose.model('User', userSchema);
 
 const reservations = mongoose.model("Reservations", reservationsSchema);
@@ -94,7 +102,9 @@ const travelPlan = mongoose.model("Travel Plan", travelPlanSchema);
 
 const Reviews = mongoose.model("Reviews", reviewsSchema);
 
-const Business = mongoose.model("Business", BusinessSchema)
+const Business = mongoose.model("Business", BusinessSchema);
+
+const Review = mongoose.model("Review", reviewSchema);
 
 app.post('/signup', async (req, res) => {
     try {
@@ -338,6 +348,16 @@ app.post('/update_business_status', async (req, res) => {
         res.status(200).send("Status updated");
     } catch (error) {
         res.status(500).send("Error updating status");
+    }
+});
+
+app.post('/create_review', async (req, res) => {
+    try {
+        const newReview = new Review(req.body);
+        await newReview.save();
+        res.status(201).json({ message: "review is posted"});
+    } catch {
+        res.status(500).send("Error creating reviews")
     }
 });
 
