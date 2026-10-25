@@ -334,18 +334,31 @@ app.get('/reviews', async (req, res) => {
 
 app.get('/business_reviews', async (req, res) => {
     try {
-        const { business_name } = req.query;
-        if (!business_name) return res.status(400).send("Name required");
+        const { owner_uid } = req.query;
 
-        const queryName = business_name.trim();
-        // This Regex matches "Testing Business" even if DB has "Testing Business "
-        const reviews = await Review.find({
-            business_name: { $regex: new RegExp("^\\s*" + queryName + "\\s*$", "i") }
+        // 1. Find the business document that belongs to this owner
+        const business = await Business.findOne({ firebaseUid: owner_uid });
+
+        if (!business) {
+            console.log("No business found for owner:", owner_uid);
+            return res.status(404).json({ message: "Business not found" });
+        }
+
+        // 2. Extract and trim the name
+        const targetName = business.business_name.trim();
+
+        // 3. Search reviews using a Case-Insensitive Regex that ignores extra spaces
+        // ^ = start, $ = end, \s* = optional whitespace
+        const reviews = await Review.find({ 
+            business_name: { $regex: new RegExp("^\\s*" + targetName + "\\s*$", "i") } 
         });
 
+        console.log(`Found ${reviews.length} reviews for: ${targetName}`);
         res.json(reviews);
+        
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error("Server Error:", error);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
