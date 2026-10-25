@@ -335,23 +335,17 @@ app.get('/reviews', async (req, res) => {
 app.get('/business_reviews', async (req, res) => {
     try {
         const { business_name } = req.query;
+        if (!business_name) return res.status(400).send("Name required");
 
-        if (!business_name) {
-            return res.status(400).json({ message: "Business name is required" });
-        }
-
-        // Use Regex to match the name even if there are extra spaces in DB
-        // Example: matches "Testing Business" and "Testing Business "
         const queryName = business_name.trim();
+        // This Regex matches "Testing Business" even if DB has "Testing Business "
         const reviews = await Review.find({
             business_name: { $regex: new RegExp("^\\s*" + queryName + "\\s*$", "i") }
         });
 
-        console.log(`Found ${reviews.length} reviews for name: ${queryName}`);
         res.json(reviews);
     } catch (error) {
-        console.error(error);
-        res.status(500).send("Server Error");
+        res.status(500).send(error.message);
     }
 });
 
