@@ -390,11 +390,15 @@ app.post('/reject_report', async (req, res) => {
 app.get('/business_reservations', async (req, res) => {
     try {
         const { business_name } = req.query;
-        // Fetch all (Pending, Approved, Rejected) 
-        const data = await reservations.find({ business_name: business_name });
+        
+        const queryName = business_name.trim();
+        const data = await reservations.find({ 
+            business_name: { $regex: new RegExp("^\\s*" + queryName + "\\s*$", "i") } 
+        });
+        
         res.json(data);
     } catch (error) {
-        res.status(500).send("Error fetching reservations");
+        res.status(500).send("Error");
     }
 });
 
