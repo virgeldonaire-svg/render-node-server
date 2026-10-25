@@ -326,8 +326,9 @@ app.post('/create_review', async (req, res) => {
 });
 
 app.get('/reviews', async (req, res) => {
-    try{
-        const reviews = await Review.find({ status: "approved" });
+    try {
+        // Remove the { status: "approved" } filter so Admin can see everything
+        const reviews = await Review.find(); 
         res.json(reviews);
     } catch (error) {
         console.error("Error fetching reviews:", error);
