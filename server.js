@@ -313,36 +313,62 @@ app.post('/update_business_status', async (req, res) => {
 
 app.post('/create_review', async (req, res) => {
     try {
-        const newReview = new Review(req.body);
+        const reviewData = req.body;
+        if (!reviewData.status) {
+            reviewData.status = "approved"; 
+        }
+        const newReview = new Review(reviewData);
         await newReview.save();
-        res.status(201).json({ message: "review is posted"});
-    } catch {
-        res.status(500).send("Error creating reviews")
+        res.status(201).json({ message: "review is posted" });
+    } catch (error) {
+        res.status(500).send("Error creating reviews");
     }
 });
 
 app.get('/reviews', async (req, res) => {
     try{
-        const reviews = await Reviews.find();
+        const reviews = await Review.find({ status: "approved" });
         res.json(reviews);
-        console.log("spot sent to android");
     } catch (error) {
-        console.error("Error fetchin reviews", error);
-        res.status(500).json({message: "server error"});
+        console.error("Error fetching reviews:", error);
+        res.status(500).json({ message: "server error" });
     }
 });
 
 app.get('/business_reviews', async (req, res) => {
     const { owner_uid } = req.query;
-    // 1. Find business by Owner UID
+    // Find business by Owner UID
     const business = await Business.findOne({ firebaseUid: owner_uid });
     if (!business) return res.status(404).send("Not found");
     
-    // 2. Find reviews by Business Name (trimming is handled by Regex)
+    // Find reviews by Business Name (trimming by Regex)
     const reviews = await Review.find({ 
         business_name: { $regex: new RegExp("^\\s*" + business.business_name.trim() + "\\s*$", "i") } 
     });
     res.json(reviews);
+});
+
+app.post('/update_review_status', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+
+        // Find the review by MongoDB's unique _id and update the status field
+        const updatedReview = await Review.findByIdAndUpdate(
+            id, 
+            { status: status }, 
+            { new: true }
+        );
+
+        if (updatedReview) {
+            console.log(`Review ${id} status updated to: ${status}`);
+            res.status(200).json({ message: "Status updated successfully" });
+        } else {
+            res.status(404).json({ message: "Review not found" });
+        }
+    } catch (error) {
+        console.error("Error updating review status:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
