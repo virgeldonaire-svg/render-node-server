@@ -386,6 +386,37 @@ app.post('/reject_report', async (req, res) => {
     }
 });
 
+app.get('/business_reservations', async (req, res) => {
+    try {
+        const { business_name } = req.query;
+        // Fetch all (Pending, Approved, Rejected) 
+        const data = await reservations.find({ business_name: business_name });
+        res.json(data);
+    } catch (error) {
+        res.status(500).send("Error fetching reservations");
+    }
+});
+
+app.post('/update_reservation_status', async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        await reservations.findByIdAndUpdate(id, { status: status });
+        res.status(200).send("Status updated");
+    } catch (error) {
+        res.status(500).send("Error updating status");
+    }
+});
+
+app.get('/user_reservations', async (req, res) => {
+    try {
+        const { uid } = req.query;
+        const data = await reservations.find({ uid: uid });
+        res.json(data);
+    } catch (error) {
+        res.status(500).send("Error");
+    }
+});
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
