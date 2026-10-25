@@ -177,16 +177,16 @@ app.post('/updateUser', async (req, res) => {
             { phoneNumber: phoneNumber }, 
             { 
                 $set: { 
-                    firebaseUid: uid, // Make sure this matches your Schema (firebaseUid)
+                    firebaseUid: uid, // make it match the uid in firebase
                     status: "approved", 
                     accountType: accountType 
                 } 
             },
-            { new: true } // THIS IS CRITICAL: It returns the user object to Android
+            { new: true } // return the it to the android app
         );
 
         if (updatedUser) {
-            // Return the full user object so Android can fetch the profile info
+            // Return the full user object the android will fetch it
             res.status(200).json(updatedUser); 
         } else {
             res.status(404).json({ message: "User not found in MongoDB" });
@@ -258,8 +258,7 @@ app.post('/create_spots', async (req, res) => {
 
 app.get('/accommodation', async (req, res) => {
     try {
-        const business = await Business.find({ status: "Approved" }); 
-        
+        const business = await Business.find(); 
         res.json(business);
         console.log("Approved accommodations sent to the tourist");
     }  catch (error) {
@@ -302,6 +301,7 @@ app.post('/register_business', async (req, res) => {
     }
 });
 
+// admin approvals 
 app.post('/update_business_status', async (req, res) => {
     try {const { name, status } = req.query;
         // Find by name and update the status field
@@ -328,7 +328,6 @@ app.post('/create_review', async (req, res) => {
 
 app.get('/reviews', async (req, res) => {
     try {
-        // Remove the { status: "approved" } filter so Admin can see everything
         const reviews = await Review.find(); 
         res.json(reviews);
     } catch (error) {
@@ -339,10 +338,12 @@ app.get('/reviews', async (req, res) => {
 
 app.get('/business_reviews', async (req, res) => {
     try {
+        // find owner_uid match currently uid
         const { owner_uid } = req.query;
         const business = await Business.findOne({ firebaseUid: owner_uid });
         if (!business) return res.status(404).send("Not found");
 
+        // then use that ui to find the business that have that uid as owner
         const reviews = await Review.find({ 
             business_name: business.business_name,
             status: { $ne: "reported" } // $ne means "Not Equal" to reported
