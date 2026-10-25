@@ -422,6 +422,30 @@ app.get('/user_reservations', async (req, res) => {
     }
 });
 
+app.get('/business_by_uid', async (req, res) => {
+    try {
+        const { uid } = req.query;
+
+        if (!uid) {
+            return res.status(400).json({ message: "UID is required" });
+        }
+
+        // firebaseUid matches the owner's UID
+        const business = await Business.findOne({ firebaseUid: uid });
+
+        if (business) {
+            // Return the full business object
+            res.status(200).json(business);
+        } else {
+            console.log("No business found for UID:", uid);
+            res.status(404).json({ message: "Business not found for this owner" });
+        }
+    } catch (error) {
+        console.error("Error fetching business by UID:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
