@@ -336,40 +336,53 @@ app.get('/reviews', async (req, res) => {
 });
 
 app.get('/business_reviews', async (req, res) => {
-    const { owner_uid } = req.query;
-    // Find business by Owner UID
-    const business = await Business.findOne({ firebaseUid: owner_uid });
-    if (!business) return res.status(404).send("Not found");
-    
-    // Find reviews by Business Name (trimming by Regex)
-    const reviews = await Review.find({ 
-        business_name: { $regex: new RegExp("^\\s*" + business.business_name.trim() + "\\s*$", "i") } 
-    });
-    res.json(reviews);
+    try {
+        const { owner_uid } = req.query;
+        const business = await Business.findOne({ firebaseUid: owner_uid });
+        if (!business) return res.status(404).send("Not found");
+
+        const reviews = await Review.find({ 
+            business_name: business.business_name,
+            status: { $ne: "reported" } // $ne means "Not Equal" to reported
+        });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).send("Server Error");
+    }
 });
 
 app.post('/update_review_status', async (req, res) => {
     try {
         const { id, status } = req.body;
-
-        // Find the review by MongoDB's unique _id and update the status field
-        const updatedReview = await Review.findByIdAndUpdate(
-            id, 
-            { status: status }, 
-            { new: true }
-        );
-
-        if (updatedReview) {
-            console.log(`Review ${id} status updated to: ${status}`);
-            res.status(200).json({ message: "Status updated successfully" });
-        } else {
-            res.status(404).json({ message: "Review not found" });
-        }
+        // Find by MongoDB _id and update the status
+        await Review.findByIdAndUpdate(id, { status: status });
+        res.status(200).send("Review status updated");
     } catch (error) {
-        console.error("Error updating review status:", error);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).send("Error updating review");
     }
 });
+
+// delete a review
+app.delete('/delete_review/:id', async (req, res) => {
+    try {
+        await Review.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Review deleted permanently" });
+    } catch (error) {
+        res.status(500).send("Error deleting review");
+    }
+});
+
+// restore the review to pending
+app.post('/reject_report', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Review.findByIdAndUpdate(id, { status: "approved" });
+        res.status(200).json({ message: "Report rejected, review restored" });
+    } catch (error) {
+        res.status(500).send("Error restoring review");
+    }
+});
+
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
