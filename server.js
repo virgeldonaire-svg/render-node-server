@@ -90,7 +90,8 @@ const reviewSchema = new mongoose.Schema({
     user_uid: String,
     review_date: String,
     rating: Number,
-    comment: String
+    comment: String,
+    status: String
 });
 
 const User = mongoose.model('User', userSchema);
