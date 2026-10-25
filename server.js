@@ -334,26 +334,26 @@ app.get('/reviews', async (req, res) => {
 
 app.get('/business_reviews', async (req, res) => {
     try {
-        const { owner_uid } = req.query;
+        const { business_name } = req.query;
 
-        const business = await Business.findOne({ firebaseUid: owner_uid });
-
-        if (!business) {
-            return res.status(404).json({ message: "No business found for this owner UID" });
+        if (!business_name) {
+            return res.status(400).json({ message: "Business name is required" });
         }
 
-        const reviews = await Review.find({ 
-            business_name: business.business_name 
+        // Use Regex to match the name even if there are extra spaces in DB
+        // Example: matches "Testing Business" and "Testing Business "
+        const queryName = business_name.trim();
+        const reviews = await Review.find({
+            business_name: { $regex: new RegExp("^\\s*" + queryName + "\\s*$", "i") }
         });
 
-        console.log(`Found ${reviews.length} reviews for: ${business.business_name}`);
+        console.log(`Found ${reviews.length} reviews for name: ${queryName}`);
         res.json(reviews);
     } catch (error) {
-        console.error("Fetch reviews error:", error);
+        console.error(error);
         res.status(500).send("Server Error");
     }
 });
-
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
