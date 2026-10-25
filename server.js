@@ -334,12 +334,23 @@ app.get('/reviews', async (req, res) => {
 
 app.get('/business_reviews', async (req, res) => {
     try {
-        const { business_name } = req.query;
-        // Only fetch reviews from DB that match the name
-        const reviews = await Review.find({ business_name: business_name });
+        const { owner_uid } = req.query;
+
+        const business = await Business.findOne({ firebaseUid: owner_uid });
+
+        if (!business) {
+            return res.status(404).json({ message: "No business found for this owner UID" });
+        }
+
+        const reviews = await Review.find({ 
+            business_name: business.business_name 
+        });
+
+        console.log(`Found ${reviews.length} reviews for: ${business.business_name}`);
         res.json(reviews);
     } catch (error) {
-        res.status(500).send("Error");
+        console.error("Fetch reviews error:", error);
+        res.status(500).send("Server Error");
     }
 });
 
