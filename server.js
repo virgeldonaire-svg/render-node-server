@@ -258,12 +258,13 @@ app.post('/create_spots', async (req, res) => {
 
 app.get('/accommodation', async (req, res) => {
     try {
-        const business = await Business.find();
+        const business = await Business.find({ status: "Approved" }); 
+        
         res.json(business);
-        console.log("accommodation succesfully sent to the tourist");
+        console.log("Approved accommodations sent to the tourist");
     }  catch (error) {
-        console.log("There is an error in server fetching",  error);
-        res.status(500).json({message: "server errror"});
+        console.log("Error fetching accommodations", error);
+        res.status(500).json({message: "server error"});
     }
 });
 
