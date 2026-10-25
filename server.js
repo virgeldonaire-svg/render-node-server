@@ -58,13 +58,6 @@ const travelPlanSchema = new mongoose.Schema({
     status: String
 });
 
-const reviewsSchema = new mongoose.Schema({
-    name: String,
-    location: String,
-    description: String,
-    image: String
-});
-
 const BusinessSchema = new mongoose.Schema({
     owner_name: String,
     firebaseUid: String,
@@ -101,8 +94,6 @@ const reservations = mongoose.model("Reservations", reservationsSchema);
 const Spot = mongoose.model("Spot", spotSchema);
 
 const travelPlan = mongoose.model("Travel Plan", travelPlanSchema);
-
-const Reviews = mongoose.model("Reviews", reviewsSchema);
 
 const Business = mongoose.model("Business", BusinessSchema);
 
@@ -265,39 +256,6 @@ app.post('/create_spots', async (req, res) => {
     }
 });
 
-app.post('/create_reviews', async (req, res) => {
-    try{
-        const{name, star, review_date, business_name, review_text, status} = req.body;
-
-        const newReview = new Reviews({
-            name,
-            stars,
-            review_date,
-            business_name,
-            review_text,
-            status: status || "pending"
-        });
-
-        await newReview.save();
-        console.log("Review is for approval ", user_name);
-        res.status(201).send();
-    } catch (error) {
-        console.error("Error creating reviews", error)
-        res.status(500).json({message: "failed to create review"})
-    }
-});
-
-app.get('/reviews', async (req, res) => {
-    try{
-        const reviews = await Reviews.find();
-        res.json(reviews);
-        console.log("spot sent to android");
-    } catch (error) {
-        console.error("Error fetchin reviews", error);
-        res.status(500).json({message: "server error"});
-    }
-});
-
 app.get('/accommodation', async (req, res) => {
     try {
         const business = await Business.find();
@@ -360,6 +318,28 @@ app.post('/create_review', async (req, res) => {
         res.status(201).json({ message: "review is posted"});
     } catch {
         res.status(500).send("Error creating reviews")
+    }
+});
+
+app.get('/reviews', async (req, res) => {
+    try{
+        const reviews = await Reviews.find();
+        res.json(reviews);
+        console.log("spot sent to android");
+    } catch (error) {
+        console.error("Error fetchin reviews", error);
+        res.status(500).json({message: "server error"});
+    }
+});
+
+app.get('/business_reviews', async (req, res) => {
+    try {
+        const { business_name } = req.query;
+        // Only fetch reviews from DB that match the name
+        const reviews = await Review.find({ business_name: business_name });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).send("Error");
     }
 });
 
