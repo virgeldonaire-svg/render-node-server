@@ -35,6 +35,7 @@ const reservationsSchema = new mongoose.Schema({
     reservation_time: String,
     number_of_guest: Number,
     special_request: String,
+    status: String,
     estimated_price: String
 })
 
