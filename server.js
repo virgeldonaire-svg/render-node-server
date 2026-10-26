@@ -402,6 +402,19 @@ app.get('/business_reservations', async (req, res) => {
     }
 });
 
+app.post('/update_business_info', async (req, res) => {
+    try {
+        const updatedData = req.body;
+        await Business.findOneAndUpdate(
+            { firebaseUid: updatedData.firebaseUid }, 
+            updatedData
+        );
+        res.status(200).send("Updated successfully");
+    } catch (error) {
+        res.status(500).send("Error updating");
+    }
+});
+
 app.post('/update_reservation_status', async (req, res) => {
     try {
         const { id, status } = req.body;
