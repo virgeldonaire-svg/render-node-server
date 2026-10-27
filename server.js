@@ -584,6 +584,30 @@ app.post('/update_travel_plan_status', async (req, res) => {
     }
 });
 
+app.delete('/cancel_plan', async (req, res) => {
+    try {const { email, name, date } = req.query;
+
+        // Delete the Travel Plan
+        await travelPlan.findOneAndDelete({ email, name, date });
+
+        // Find user to get UID for the reservation search
+        const user = await User.findOne({ email });
+        
+        if (user) {
+            // Delete the Reservation matching these details
+            await reservations.findOneAndDelete({
+                uid: user.firebaseUid,
+                business_name: name,
+                reservation_date: date
+            });
+        }
+
+        res.status(200).send("Cancelled successfully");
+    } catch (error) {
+        res.status(500).send("Error cancelling");
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
