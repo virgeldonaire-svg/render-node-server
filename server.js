@@ -448,6 +448,7 @@ app.post('/update_business_info', async (req, res) => {
 app.post('/update_reservation_status', async (req, res) => {
     try {
         const { id, status } = req.body;
+
         // Update the Reservation status
         const updatedReservation = await reservations.findByIdAndUpdate(
             id, 
@@ -459,30 +460,27 @@ app.post('/update_reservation_status', async (req, res) => {
             return res.status(404).send("Reservation not found");
         }
 
-        // If approved, update the corresponding Travel Plan
+        // Sync with Travel Plan if status is 'Approved'
         if (status.toLowerCase() === 'approved') {
-            // We need the user's email from the User collection using the reservation's uid
+            // Find the user to get their email
             const user = await User.findOne({ firebaseUid: updatedReservation.uid });
             
             if (user) {
-                console.log(`Syncing Travel Plan for: ${user.email}`);
-                
-                // the plan by email, business name, date, and time
+                // Find and update the matching Travel Plan
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
                         name: updatedReservation.business_name,
-                        date: updatedReservation.reservation_date,
-                        // time format 
-                        time: updatedReservation.reservation_time.replace("Selected Time: ", "").trim()
+                        date: updatedReservation.reservation_date
                     },
-                    { status: 'confirmed' } // Update this to 'confirmed' to show in the tourist's tab
+                    { status: 'confirmed' } // Change 'pending' to 'confirmed'
                 );
             }
         }
+
         res.status(200).send("Status updated and synced with Travel Plan");
     } catch (error) {
-        console.error("Error updating status:", error);
+        console.error("Update status error:", error);
         res.status(500).send("Error updating status");
     }
 });
