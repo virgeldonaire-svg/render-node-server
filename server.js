@@ -445,10 +445,11 @@ app.post('/update_business_info', async (req, res) => {
     }
 });
 
-app.post('/update_reservation_status', async (req, res) => {    try {
+app.post('/update_reservation_status', async (req, res) => {
+    try {
         const { id, status } = req.body;
 
-        // 1. Update the Reservation status
+        // Update the Reservation to "Approved"
         const updatedRes = await reservations.findByIdAndUpdate(
             id, 
             { status: status }, 
@@ -457,30 +458,35 @@ app.post('/update_reservation_status', async (req, res) => {    try {
 
         if (!updatedRes) return res.status(404).send("Reservation not found");
 
-        // 2. Sync with Travel Plan if status is 'Approved'
+        // If status is "Approved", automatically create the Travel Plan
         if (status.toLowerCase() === 'approved') {
-            // Find the user to get their email address
+            
+            // Bridge: Find user email using the UID from the reservation
             const user = await User.findOne({ firebaseUid: updatedRes.uid });
             
-            if (user) {
-                // Find and update the matching Travel Plan document
-                // Using regex for the name helps match even with trailing spaces
-                await travelPlan.findOneAndUpdate(
-                    {
-                        email: user.email,
-                        name: { $regex: new RegExp("^\\s*" + updatedRes.business_name.trim() + "\\s*$", "i") },
-                        date: updatedRes.reservation_date
-                    },
-                    { status: 'confirmed' }
-                );
-                console.log(`Cascade Sync: Travel Plan for ${user.email} confirmed.`);
+            // Get business info for the "Location" and "Type" fields
+            const business = await Business.findOne({ business_name: updatedRes.business_name });
+
+            if (user && business) {
+                const newPlan = new travelPlan({
+                    email: user.email,
+                    name: updatedRes.business_name,
+                    location: business.location,
+                    type: business.type_of_business,
+                    date: updatedRes.reservation_date,
+                    // Clean the time string
+                    time: updatedRes.reservation_time.replace("Selected Time: ", "").trim(),
+                    status: 'confirmed' 
+                });
+
+                await newPlan.save();
+                console.log(`Travel Plan created for ${user.email}`);
             }
         }
 
-        res.status(200).send("Status updated and synced with Travel Plan");
+        res.status(200).send("Status updated and Plan created");
     } catch (error) {
-        console.error("Update error:", error);
-        res.status(500).send("Error updating status");
+        res.status(500).send("Server Error");
     }
 });
 
