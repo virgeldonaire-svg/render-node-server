@@ -460,6 +460,27 @@ app.get('/business_by_uid', async (req, res) => {
     }
 });
 
+router.put('/update_status', async (req, res) => {
+    const { business_name, status } = req.body;
+    try {
+        await Business.findOneAndUpdate(
+            { business_name: business_name }, 
+            { status: status }
+        );
+        res.status(200).send("Status updated");
+    } catch (error) {
+        res.status(500).send("Server error");
+    }
+});
+
+router.get('/businesses', async (req, res) => {
+    try {
+        const businesses = await Business.find(); 
+        res.json(businesses);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
