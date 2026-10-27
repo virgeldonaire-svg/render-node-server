@@ -176,9 +176,14 @@ app.get('/business_reservations', async (req, res) => {
     try {
         const { business_name } = req.query;
         if (!business_name) return res.status(400).send("Name required");
+
+        // Trim the incoming name and search
+        const queryName = business_name.trim();
+        const data = await Reservation.find({ 
+            business_name: { $regex: new RegExp("^" + queryName + "$", "i") } 
+        });
         
-        // Use a simple find. Regex is only needed if there are trailing spaces.
-        const data = await Reservation.find({ business_name: business_name.trim() });
+        console.log(`Found ${data.length} reservations for ${queryName}`);
         res.json(data);
     } catch (error) {
         res.status(500).send("Error");
@@ -232,12 +237,19 @@ app.get('/business_reviews', async (req, res) => {
     try {
         const { owner_uid } = req.query;
         const business = await Business.findOne({ firebaseUid: owner_uid });
-        if (!business) return res.status(404).send("Business not found");
+        
+        if (!business) {
+            console.log("No business found for UID:", owner_uid);
+            return res.status(404).send("Business not found");
+        }
 
+        // Use regex to be flexible with spaces/case
         const reviews = await Review.find({ 
-            business_name: business.business_name,
+            business_name: { $regex: new RegExp("^" + business.business_name.trim() + "$", "i") },
             status: { $ne: "reported" } 
         });
+        
+        console.log(`Found ${reviews.length} reviews for ${business.business_name}`);
         res.json(reviews);
     } catch (error) {
         res.status(500).send("Server Error");
