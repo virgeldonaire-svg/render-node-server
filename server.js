@@ -445,35 +445,42 @@ app.post('/update_business_info', async (req, res) => {
     }
 });
 
-app.post('/update_reservation_status', async (req, res) => {
-    try {
+app.post('/update_reservation_status', async (req, res) => {    try {
         const { id, status } = req.body;
 
-        // 1. Update the Reservation (uses 'uid' and 'business_name')
-        const updatedRes = await reservations.findByIdAndUpdate(id, { status: status }, { new: true });
+        // 1. Update the Reservation status
+        const updatedRes = await reservations.findByIdAndUpdate(
+            id, 
+            { status: status }, 
+            { new: true }
+        );
 
         if (!updatedRes) return res.status(404).send("Reservation not found");
 
-        // 2. Bridge the Schema: Use 'uid' from Reservation to find 'email' from User
-        if (status.toLowerCase() === 'approved' || status.toLowerCase() === 'confirmed') {
+        // 2. Sync with Travel Plan if status is 'Approved'
+        if (status.toLowerCase() === 'approved') {
+            // Find the user to get their email address
             const user = await User.findOne({ firebaseUid: updatedRes.uid });
             
             if (user) {
-                // 3. Update the Travel Plan (uses 'email' and 'name')
+                // Find and update the matching Travel Plan document
+                // Using regex for the name helps match even with trailing spaces
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
-                        name: updatedRes.business_name,
+                        name: { $regex: new RegExp("^\\s*" + updatedRes.business_name.trim() + "\\s*$", "i") },
                         date: updatedRes.reservation_date
                     },
-                    { status: 'confirmed' } // This allows it to show in the "Confirmed" tab
+                    { status: 'confirmed' }
                 );
-                console.log(`Cascade: Travel Plan for ${user.email} is now confirmed.`);
+                console.log(`Cascade Sync: Travel Plan for ${user.email} confirmed.`);
             }
         }
-        res.status(200).send("Status updated");
+
+        res.status(200).send("Status updated and synced with Travel Plan");
     } catch (error) {
-        res.status(500).send("Server Error");
+        console.error("Update error:", error);
+        res.status(500).send("Error updating status");
     }
 });
 
@@ -546,6 +553,30 @@ app.get('/business_reservations', async (req, res) => {
         res.json(data);
     } catch (error) {
         res.status(500).send("Error");
+    }
+});
+
+app.post('/update_travel_plan_status', async (req, res) => {
+    try {
+        const { email, name, date, status } = req.body;
+        
+        const result = await travelPlan.findOneAndUpdate(
+            { 
+                email: email, 
+                name: { $regex: new RegExp(name.trim(), "i") }, 
+                date: date 
+            },
+            { status: status },
+            { new: true }
+        );
+
+        if (result) {
+            res.status(200).json(result);
+        } else {
+            res.status(404).send("Travel plan not found");
+        }
+    } catch (error) {
+        res.status(500).send("Error updating travel plan");
     }
 });
 
