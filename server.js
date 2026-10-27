@@ -467,14 +467,18 @@ app.post('/update_reservation_status', async (req, res) => {
             
             if (user) {
                 // Find and update the matching Travel Plan
+
+                const businessName = updatedReservation.business_name.trim();
+                
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
-                        name: updatedReservation.business_name,
+                        name: { $regex: new RegExp("^\\s*" + businessName + "\\s*$", "i") },
                         date: updatedReservation.reservation_date
                     },
                     { status: 'confirmed' } // Change 'pending' to 'confirmed'
                 );
+               console.log(`Synced Travel Plan to 'confirmed' for ${user.email}`);
             }
         }
 
