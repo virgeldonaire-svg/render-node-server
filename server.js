@@ -317,16 +317,27 @@ app.post('/update_business_status', async (req, res) => {
 });
 
 app.post('/create_review', async (req, res) => {
-    try {
-        const reviewData = req.body;
-        if (!reviewData.status) {
-            reviewData.status = "approved"; 
-        }
+    try {        const reviewData = req.body;
+        if (!reviewData.status) reviewData.status = "approved"; 
+
         const newReview = new Review(reviewData);
         await newReview.save();
-        res.status(201).json({ message: "review is posted" });
+        const allReviews = await Review.find({ 
+            business_name: reviewData.business_name, 
+            status: "approved" 
+        });
+
+        if (allReviews.length > 0) {
+            const total = allReviews.reduce((sum, r) => sum + r.rating, 0);
+            const average = total / allReviews.length;
+            await Business.findOneAndUpdate(
+                { business_name: reviewData.business_name },
+                { stars: average, reviews_count: allReviews.length }
+            );
+        }
+        res.status(201).json({ message: "Review posted and rating updated" });
     } catch (error) {
-        res.status(500).send("Error creating reviews");
+        res.status(500).send("Error");
     }
 });
 
