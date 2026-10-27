@@ -304,9 +304,12 @@ app.post('/register_business', async (req, res) => {
 
 // admin approvals 
 app.post('/update_business_status', async (req, res) => {
-    try {const { name, status } = req.query;
-        // Find by name and update the status field
-        await Business.findOneAndUpdate({ business_name: name }, { status: status });
+    try {
+        const { name, status } = req.query; // Matches @Query in Retrofit
+        await Business.findOneAndUpdate(
+            { business_name: name }, 
+            { status: status }
+        );
         res.status(200).send("Status updated");
     } catch (error) {
         res.status(500).send("Error updating status");
@@ -450,6 +453,35 @@ app.get('/business_by_uid', async (req, res) => {
     }
 });
 
+app.get('/getAllBusinessByUid', async (req, res) => {
+    try {
+        const { uid } = req.query;
+        if (!uid) return res.status(400).json({ message: "UID required" });
+
+        // Use .find() to return an ARRAY of all businesses owned by this UID
+        const businesses = await Business.find({ firebaseUid: uid });
+        
+        if (businesses.length === 0) {
+            return res.status(404).json({ message: "No businesses found" });
+        }
+        res.json(businesses);
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+});
+
+app.get('/reviews_by_name', async (req, res) => {
+    try {
+        const { business_name } = req.query;
+        const reviews = await Review.find({ 
+            business_name: business_name,
+            status: { $ne: "reported" } 
+        });
+        res.json(reviews);
+    } catch (error) {
+        res.status(500).send("Error fetching reviews");
+    }
+});
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
