@@ -482,6 +482,22 @@ router.get('/businesses', async (req, res) => {
     }
 });
 
+router.get('/user/:uid', async (req, res) => {
+    try {
+        const uid = req.params.uid;
+
+        const businesses = await Business.find({ uid: uid });
+
+        if (!businesses || businesses.length === 0) {
+            return res.status(404).json({ message: "No businesses found" });
+        }
+
+        res.json(businesses); 
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
