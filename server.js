@@ -460,7 +460,7 @@ app.get('/business_by_uid', async (req, res) => {
     }
 });
 
-router.put('/update_status', async (req, res) => {
+app.put('/update_status', async (req, res) => {
     const { business_name, status } = req.body;
     try {
         await Business.findOneAndUpdate(
@@ -473,7 +473,7 @@ router.put('/update_status', async (req, res) => {
     }
 });
 
-router.get('/businesses', async (req, res) => {
+app.get('/businesses', async (req, res) => {
     try {
         const businesses = await Business.find(); 
         res.json(businesses);
@@ -482,7 +482,7 @@ router.get('/businesses', async (req, res) => {
     }
 });
 
-router.get('/user/:uid', async (req, res) => {
+app.get('/user/:uid', async (req, res) => {
     try {
         const uid = req.params.uid;
 
