@@ -630,6 +630,11 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
 
+app.get('/user_by_uid', async (req, res) => {
+    const user = await User.findOne({ firebaseUid: req.query.uid });
+    res.json(user);
+});
+
 // quickref
 // git add server.js 
 // git commit -m "
