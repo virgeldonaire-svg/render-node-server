@@ -404,12 +404,43 @@ app.get('/business_reservations', async (req, res) => {
 app.post('/update_business_info', async (req, res) => {
     try {
         const updatedData = req.body;
+        
+        // 1. Find the existing business to get the OLD name
+        const oldBusiness = await Business.findOne({ firebaseUid: updatedData.firebaseUid });
+        
+        if (!oldBusiness) {
+            return res.status(404).send("Business not found");
+        }
+
+        const oldName = oldBusiness.business_name;
+        const newName = updatedData.business_name;
+
+        // 2. Update the Business document
         await Business.findOneAndUpdate(
             { firebaseUid: updatedData.firebaseUid }, 
             updatedData
         );
+
+        // 3. CASCADE UPDATE: If the name changed, update all linked records
+        if (oldName !== newName) {
+            console.log(`Renaming ${oldName} to ${newName} in Reservations and Reviews...`);
+            
+            // Update all Reservations
+            await reservations.updateMany(
+                { business_name: oldName }, 
+                { $set: { business_name: newName } }
+            );
+
+            // Update all Reviews
+            await Review.updateMany(
+                { business_name: oldName }, 
+                { $set: { business_name: newName } }
+            );
+        }
+
         res.status(200).send("Updated successfully");
     } catch (error) {
+        console.error("Update error:", error);
         res.status(500).send("Error updating");
     }
 });
