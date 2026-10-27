@@ -446,46 +446,44 @@ app.post('/update_business_info', async (req, res) => {
 });
 
 app.post('/update_reservation_status', async (req, res) => {
-    try {
-        const { id, status } = req.body;
+    try {const { id, status } = req.body;
 
-        // Update the Reservation to "Approved"
+        // 1. Update the Reservation
         const updatedRes = await reservations.findByIdAndUpdate(
             id, 
-            { status: status }, 
+            { status: status }, // This saves exactly what came from the app (e.g., "Approved")
             { new: true }
         );
 
         if (!updatedRes) return res.status(404).send("Reservation not found");
 
-        // If status is "Approved", automatically create the Travel Plan
-        if (status.toLowerCase() === 'approved') {
+        // 2. Case-Insensitive check for approval to trigger Travel Plan creation
+        // This handles "Approved", "approved", or "APPROVED"
+        if (status && status.toLowerCase() === 'approved') {
             
-            // Bridge: Find user email using the UID from the reservation
             const user = await User.findOne({ firebaseUid: updatedRes.uid });
-            
-            // Get business info for the "Location" and "Type" fields
             const business = await Business.findOne({ business_name: updatedRes.business_name });
 
             if (user && business) {
-                const newPlan = new travelPlan({
-                    email: user.email,
-                    name: updatedRes.business_name,
-                    location: business.location,
-                    type: business.type_of_business,
-                    date: updatedRes.reservation_date,
-                    // Clean the time string
-                    time: updatedRes.reservation_time.replace("Selected Time: ", "").trim(),
-                    status: 'confirmed' 
-                });
-
-                await newPlan.save();
-                console.log(`Travel Plan created for ${user.email}`);
+                // Check if plan exists (use name regex to ignore trailing spaces)
+                const bName = updatedRes.business_name.trim();
+                
+                await travelPlan.findOneAndUpdate(
+                    {
+                        email: user.email,
+                        name: { $regex: new RegExp("^\\s*" + bName + "\\s*$", "i") },
+                        date: updatedRes.reservation_date
+                    },
+                    { status: 'confirmed' }, // We set the Travel Plan to 'confirmed'
+                    { upsert: true, new: true } // upsert: true creates it if it doesn't exist!
+                );
+                console.log(`Synced Travel Plan for ${user.email} to confirmed`);
             }
         }
 
-        res.status(200).send("Status updated and Plan created");
+        res.status(200).send("Status updated");
     } catch (error) {
+        console.error("Update error:", error);
         res.status(500).send("Server Error");
     }
 });
