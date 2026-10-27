@@ -317,7 +317,8 @@ app.post('/update_business_status', async (req, res) => {
 });
 
 app.post('/create_review', async (req, res) => {
-    try {        const reviewData = req.body;
+    try {        
+        const reviewData = req.body;
         if (!reviewData.status) reviewData.status = "approved"; 
 
         const newReview = new Review(reviewData);
