@@ -449,40 +449,31 @@ app.post('/update_reservation_status', async (req, res) => {
     try {
         const { id, status } = req.body;
 
-        const updatedReservation = await reservations.findByIdAndUpdate(
-            id, 
-            { status: status }, 
-            { new: true }
-        );
+        // 1. Update the Reservation (uses 'uid' and 'business_name')
+        const updatedRes = await reservations.findByIdAndUpdate(id, { status: status }, { new: true });
 
-        if (!updatedReservation) {
-            return res.status(404).send("Reservation not found");
-        }
+        if (!updatedRes) return res.status(404).send("Reservation not found");
 
-        // Sync with Travel Plan if status is 'Approved' (Case-insensitive check)
-        if (status.toLowerCase() === 'approved') {
-            const user = await User.findOne({ firebaseUid: updatedReservation.uid });
+        // 2. Bridge the Schema: Use 'uid' from Reservation to find 'email' from User
+        if (status.toLowerCase() === 'approved' || status.toLowerCase() === 'confirmed') {
+            const user = await User.findOne({ firebaseUid: updatedRes.uid });
             
             if (user) {
-                // FIX: Define businessName from the updated reservation
-                const bName = updatedReservation.business_name.trim();
-                
+                // 3. Update the Travel Plan (uses 'email' and 'name')
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
-                        name: { $regex: new RegExp("^\\s*" + bName + "\\s*$", "i") },
-                        date: updatedReservation.reservation_date
+                        name: updatedRes.business_name,
+                        date: updatedRes.reservation_date
                     },
-                    { status: 'confirmed' } // Status changes from 'pending' to 'confirmed'
+                    { status: 'confirmed' } // This allows it to show in the "Confirmed" tab
                 );
-               console.log(`Synced Travel Plan to 'confirmed' for ${user.email}`);
+                console.log(`Cascade: Travel Plan for ${user.email} is now confirmed.`);
             }
         }
-
-        res.status(200).send("Status updated and synced with Travel Plan");
+        res.status(200).send("Status updated");
     } catch (error) {
-        console.error("Update status error:", error);
-        res.status(500).send("Error updating status");
+        res.status(500).send("Server Error");
     }
 });
 
