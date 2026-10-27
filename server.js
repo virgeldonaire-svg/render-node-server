@@ -620,6 +620,12 @@ app.delete('/cancel_plan', async (req, res) => {
     }
 });
 
+app.post('/updateUserProfile', async (req, res) => {
+    const { uid, photo } = req.body;
+    await User.findOneAndUpdate({ firebaseUid: uid }, { photo: photo });
+    res.status(200).send("Updated");
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
