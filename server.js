@@ -514,6 +514,21 @@ app.get('/reviews_by_name', async (req, res) => {
     }
 });
 
+app.get('/business_reservations', async (req, res) => {
+    try {
+        const { business_name } = req.query; // It takes the name here
+
+        const queryName = business_name.trim();
+        // It searches the reservations collection for that specific name
+        const data = await reservations.find({ 
+            business_name: { $regex: new RegExp("^\\s*" + queryName + "\\s*$", "i") } 
+        });
+        res.json(data);
+    } catch (error) {
+        res.status(500).send("Error");
+    }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
