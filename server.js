@@ -448,9 +448,41 @@ app.post('/update_business_info', async (req, res) => {
 app.post('/update_reservation_status', async (req, res) => {
     try {
         const { id, status } = req.body;
-        await reservations.findByIdAndUpdate(id, { status: status });
-        res.status(200).send("Status updated");
+        // Update the Reservation status
+        const updatedReservation = await reservations.findByIdAndUpdate(
+            id, 
+            { status: status }, 
+            { new: true }
+        );
+
+        if (!updatedReservation) {
+            return res.status(404).send("Reservation not found");
+        }
+
+        // If approved, update the corresponding Travel Plan
+        if (status.toLowerCase() === 'approved') {
+            // We need the user's email from the User collection using the reservation's uid
+            const user = await User.findOne({ firebaseUid: updatedReservation.uid });
+            
+            if (user) {
+                console.log(`Syncing Travel Plan for: ${user.email}`);
+                
+                // the plan by email, business name, date, and time
+                await travelPlan.findOneAndUpdate(
+                    {
+                        email: user.email,
+                        name: updatedReservation.business_name,
+                        date: updatedReservation.reservation_date,
+                        // time format 
+                        time: updatedReservation.reservation_time.replace("Selected Time: ", "").trim()
+                    },
+                    { status: 'confirmed' } // Update this to 'confirmed' to show in the tourist's tab
+                );
+            }
+        }
+        res.status(200).send("Status updated and synced with Travel Plan");
     } catch (error) {
+        console.error("Error updating status:", error);
         res.status(500).send("Error updating status");
     }
 });
@@ -488,10 +520,8 @@ app.get('/getAllBusinessByUid', async (req, res) => {
     try {
         const { uid } = req.query;
         if (!uid) return res.status(400).json({ message: "UID required" });
-
         // Use .find() to return an ARRAY of all businesses owned by this UID
         const businesses = await Business.find({ firebaseUid: uid });
-        
         if (businesses.length === 0) {
             return res.status(404).json({ message: "No businesses found" });
         }
