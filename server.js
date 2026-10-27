@@ -449,7 +449,6 @@ app.post('/update_reservation_status', async (req, res) => {
     try {
         const { id, status } = req.body;
 
-        // Update the Reservation status
         const updatedReservation = await reservations.findByIdAndUpdate(
             id, 
             { status: status }, 
@@ -460,20 +459,21 @@ app.post('/update_reservation_status', async (req, res) => {
             return res.status(404).send("Reservation not found");
         }
 
-        // Sync with Travel Plan if status is 'Approved'
+        // Sync with Travel Plan if status is 'Approved' (Case-insensitive check)
         if (status.toLowerCase() === 'approved') {
-            // Find the user to get their email
             const user = await User.findOne({ firebaseUid: updatedReservation.uid });
             
             if (user) {
-                // Find and update the matching Travel Plan
+                // FIX: Define businessName from the updated reservation
+                const bName = updatedReservation.business_name.trim();
+                
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
-                        name: { $regex: new RegExp("^\\s*" + businessName + "\\s*$", "i") },
+                        name: { $regex: new RegExp("^\\s*" + bName + "\\s*$", "i") },
                         date: updatedReservation.reservation_date
                     },
-                    { status: 'confirmed' } // Change 'pending' to 'confirmed'
+                    { status: 'confirmed' } // Status changes from 'pending' to 'confirmed'
                 );
                console.log(`Synced Travel Plan to 'confirmed' for ${user.email}`);
             }
