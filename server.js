@@ -405,7 +405,7 @@ app.post('/update_business_info', async (req, res) => {
     try {
         const updatedData = req.body;
         
-        // 1. Find the existing business to get the OLD name
+        // Find the existing business to get the OLD name
         const oldBusiness = await Business.findOne({ firebaseUid: updatedData.firebaseUid });
         
         if (!oldBusiness) {
@@ -415,13 +415,13 @@ app.post('/update_business_info', async (req, res) => {
         const oldName = oldBusiness.business_name;
         const newName = updatedData.business_name;
 
-        // 2. Update the Business document
+        // Update the Business document
         await Business.findOneAndUpdate(
             { firebaseUid: updatedData.firebaseUid }, 
             updatedData
         );
 
-        // 3. CASCADE UPDATE: If the name changed, update all linked records
+        // CASCADE UPDATE: If the name changed, update all linked records
         if (oldName !== newName) {
             console.log(`Renaming ${oldName} to ${newName} in Reservations and Reviews...`);
             
@@ -467,9 +467,6 @@ app.post('/update_reservation_status', async (req, res) => {
             
             if (user) {
                 // Find and update the matching Travel Plan
-
-                const businessName = updatedReservation.business_name.trim();
-                
                 await travelPlan.findOneAndUpdate(
                     {
                         email: user.email,
