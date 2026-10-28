@@ -597,29 +597,42 @@ app.post('/update_travel_plan_status', async (req, res) => {
 });
 
 app.delete('/cancel_plan', async (req, res) => {
-    try {const { email, name, date } = req.query;
+    try {
+        const { email, name, date } = req.query;
 
-        // Delete the Travel Plan
-        await travelPlan.findOneAndDelete({ email, name, date });
+        console.log(`Received cancel request for: ${name} on ${date}`);
 
-        // Find user to get UID for the reservation search
-        const user = await User.findOne({ email });
+        const updatedPlan = await travelPlan.findOneAndUpdate(
+            { 
+                email: email, 
+                name: { $regex: new RegExp("^\\s*" + name.trim() + "\\s*$", "i") }, 
+                date: date 
+            },
+            { status: 'Cancelled' }, // Changing status instead of deleting
+            { new: true }
+        );
+
+        const user = await User.findOne({ email: email });
         
         if (user) {
-            // Delete the Reservation matching these details
-            await reservations.findOneAndDelete({
-                uid: user.firebaseUid,
-                business_name: name,
-                reservation_date: date
-            });
+            await reservations.findOneAndUpdate(
+                {
+                    uid: user.firebaseUid,
+                    business_name: { $regex: new RegExp("^\\s*" + name.trim() + "\\s*$", "i") },
+                    reservation_date: date
+                },
+                { status: 'Cancelled' }
+            );
+            console.log("Successfully synced cancellation to Reservations.");
         }
 
-        res.status(200).send("Cancelled successfully");
+        res.status(200).send("Status updated to Cancelled");
+
     } catch (error) {
-        res.status(500).send("Error cancelling");
+        console.error("Cancellation Error:", error);
+        res.status(500).send("Server Error");
     }
 });
-
 app.post('/updateUserProfile', async (req, res) => {
     const { uid, photo } = req.body;
     await User.findOneAndUpdate({ firebaseUid: uid }, { photo: photo });
