@@ -24,7 +24,8 @@ const userSchema = new mongoose.Schema({
     reviewsCount: Number,
     status: String, 
     otp: String,
-    otpExpires: Date
+    otpExpires: Date,
+    photo: String
 });
 
 const reservationsSchema = new mongoose.Schema({
