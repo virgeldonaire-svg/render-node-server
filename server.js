@@ -673,6 +673,41 @@ app.patch('/admin/reservations/:id/status', async (req, res) => {
     }
 });
 
+app.post('/updateUserProfile', async (req, res) => {
+    try {
+        const { uid, photo, name } = req.body;
+        let updateData = {};
+        
+        if (photo) updateData.photo = photo;
+        if (name) updateData.name = name;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { firebaseUid: uid }, 
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (updatedUser) {
+            res.status(200).json(updatedUser);
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+app.get('/user_reviews', async (req, res) => {
+    try {
+        const { uid } = req.query;
+        const userReviews = await Review.find({ user_uid: uid });
+        res.json(userReviews);
+    } catch (error) {
+        res.status(500).send("Error fetching reviews");
+    }
+});
+
 // quickref
 // git add server.js 
 // git commit -m "
