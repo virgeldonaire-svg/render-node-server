@@ -709,6 +709,29 @@ app.get('/user_reviews', async (req, res) => {
     }
 });
 
+app.post('/update_user_status', async (req, res) => {
+    const { uid, status } = req.body;
+    
+    try {
+        // Find user by UID and update their status field
+        // This example uses Mongoose. Adjust if you use a different DB driver.
+        const result = await User.findOneAndUpdate(
+            { uid: uid }, 
+            { status: status }, 
+            { new: true }
+        );
+
+        if (result) {
+            res.status(200).send({ message: "Status updated to " + status });
+        } else {
+            res.status(404).send({ message: "User not found" });
+        }
+    } catch (error) {
+        console.error("Update Error:", error);
+        res.status(500).send({ message: "Internal server error" });
+    }
+});
+
 // quickref
 // git add server.js 
 // git commit -m "
