@@ -649,7 +649,7 @@ app.get('/user_by_uid', async (req, res) => {
     res.json(user);
 });
 
-router.get('/admin/reservations/all', async (req, res) => {
+app.get('/admin/reservations/all', async (req, res) => {
     try {
         // Fetch all reservations and sort by date (newest first)
         const reservations = await Reservation.find({}).sort({ createdAt: -1 });
@@ -659,7 +659,7 @@ router.get('/admin/reservations/all', async (req, res) => {
     }
 });
 
-router.patch('/admin/reservations/:id/status', async (req, res) => {
+app.patch('/admin/reservations/:id/status', async (req, res) => {
     const { status } = req.body; // e.g., { "status": "cancelled" }
     try {
         const updatedReservation = await Reservation.findByIdAndUpdate(
