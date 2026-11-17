@@ -709,21 +709,21 @@ app.get('/user_reviews', async (req, res) => {
     }
 });
 
-app.post('/update_user_status', async (req, res) => {
-    const { uid, status } = req.body;
+app.post('/update_user_status', async (req, res) => {const { uid, status } = req.body;
     
     try {
-        // Find user by UID and update their status field
-        // This example uses Mongoose. Adjust if you use a different DB driver.
+        // Change 'uid: uid' to 'firebaseUid: uid' to match your schema
         const result = await User.findOneAndUpdate(
-            { uid: uid }, 
+            { firebaseUid: uid }, // <--- THIS WAS THE BUG
             { status: status }, 
             { new: true }
         );
 
         if (result) {
-            res.status(200).send({ message: "Status updated to " + status });
+            res.status(200).send({ message: "Status updated successfully" });
         } else {
+            // Log to server console for debugging
+            console.log("Update failed: User not found for UID " + uid);
             res.status(404).send({ message: "User not found" });
         }
     } catch (error) {
@@ -731,7 +731,7 @@ app.post('/update_user_status', async (req, res) => {
         res.status(500).send({ message: "Internal server error" });
     }
 });
-
 // quickref
 // git add server.js 
 // git commit -m "
+//git push origin main  
