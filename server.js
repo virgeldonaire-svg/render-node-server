@@ -462,7 +462,7 @@ app.post('/update_business_info', async (req, res) => {
 app.post('/update_reservation_status', async (req, res) => {
     try {const { id, status } = req.body;
 
-        // 1. Update the Reservation
+        // Update the Reservation
         const updatedRes = await reservations.findByIdAndUpdate(
             id, 
             { status: status }, // This saves exactly what came from the app (e.g., "Approved")
@@ -636,9 +636,30 @@ app.delete('/cancel_plan', async (req, res) => {
     }
 });
 app.post('/updateUserProfile', async (req, res) => {
-    const { uid, photo } = req.body;
-    await User.findOneAndUpdate({ firebaseUid: uid }, { photo: photo });
-    res.status(200).send("Updated");
+    try {
+        const { uid, name, photo } = req.body;
+        let updateData = {};
+        
+        // Only update fields that are provided in the request
+        if (name) updateData.name = name;
+        if (photo) updateData.photo = photo;
+
+        const updatedUser = await User.findOneAndUpdate(
+            { firebaseUid: uid }, 
+            { $set: updateData },
+            { new: true }
+        );
+
+        if (updatedUser) {
+            console.log(`Profile updated for: ${uid}`);
+            res.status(200).json(updatedUser);
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -674,31 +695,6 @@ app.patch('/admin/reservations/:id/status', async (req, res) => {
     }
 });
 
-app.post('/updateUserProfile', async (req, res) => {
-    try {
-        const { uid, photo, name } = req.body;
-        let updateData = {};
-        
-        if (photo) updateData.photo = photo;
-        if (name) updateData.name = name;
-
-        const updatedUser = await User.findOneAndUpdate(
-            { firebaseUid: uid }, 
-            { $set: updateData },
-            { new: true }
-        );
-
-        if (updatedUser) {
-            res.status(200).json(updatedUser);
-        } else {
-            res.status(404).json({ message: "User not found" });
-        }
-    } catch (error) {
-        console.error("Update error:", error);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-
 app.get('/user_reviews', async (req, res) => {
     try {
         const { uid } = req.query;
@@ -712,9 +708,9 @@ app.get('/user_reviews', async (req, res) => {
 app.post('/update_user_status', async (req, res) => {const { uid, status } = req.body;
     
     try {
-        // Change 'uid: uid' to 'firebaseUid: uid' to match your schema
+        // Change 'uid: uid' to 'firebaseUid: uid' to match schema
         const result = await User.findOneAndUpdate(
-            { firebaseUid: uid }, // <--- THIS WAS THE BUG
+            { firebaseUid: uid }, 
             { status: status }, 
             { new: true }
         );
