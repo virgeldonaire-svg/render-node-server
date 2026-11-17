@@ -434,7 +434,7 @@ app.post('/update_business_info', async (req, res) => {
             updatedData
         );
 
-        // CASCADE UPDATE: If the name changed, update all linked records
+        //  If the name changed, update all linked records
         if (oldName !== newName) {
             console.log(`Renaming ${oldName} to ${newName} in Reservations and Reviews...`);
             
@@ -470,7 +470,7 @@ app.post('/update_reservation_status', async (req, res) => {
 
         if (!updatedRes) return res.status(404).send("Reservation not found");
 
-        // 2. Case-Insensitive check for approval to trigger Travel Plan creation
+        // Case-Insensitive check for approval to trigger Travel Plan creation
         // This handles "Approved", "approved", or "APPROVED"
         if (status && status.toLowerCase() === 'approved') {
             
@@ -647,6 +647,30 @@ app.listen(PORT, '0.0.0.0', () => {
 app.get('/user_by_uid', async (req, res) => {
     const user = await User.findOne({ firebaseUid: req.query.uid });
     res.json(user);
+});
+
+router.get('/admin/reservations/all', async (req, res) => {
+    try {
+        // Fetch all reservations and sort by date (newest first)
+        const reservations = await Reservation.find({}).sort({ createdAt: -1 });
+        res.status(200).json(reservations);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching all reservations", error });
+    }
+});
+
+router.patch('/admin/reservations/:id/status', async (req, res) => {
+    const { status } = req.body; // e.g., { "status": "cancelled" }
+    try {
+        const updatedReservation = await Reservation.findByIdAndUpdate(
+            req.params.id,
+            { travel_status: status },
+            { new: true }
+        );
+        res.status(200).json(updatedReservation);
+    } catch (error) {
+        res.status(500).json({ message: "Update failed", error });
+    }
 });
 
 // quickref
