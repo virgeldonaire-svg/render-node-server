@@ -51,6 +51,7 @@ const spotSchema = new mongoose.Schema({
 });
 
 const travelPlanSchema = new mongoose.Schema({
+    uid: String,
     email: String,
     name: String,
     location: String,
