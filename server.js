@@ -106,7 +106,7 @@ app.post('/signup', async (req, res) => {
     try {
         const { uid, name, email, phoneNumber, password, accountType } = req.body;
 
-        const status = (accountType === "business owner") ? "approved" : "pending";
+        const finalStatus = status || "Approved";
         const newUser = new User ({
             firebaseUid: uid,
             name: name,
@@ -115,7 +115,7 @@ app.post('/signup', async (req, res) => {
             password: password,
             accountType: accountType,
             reviewsCount: 0,
-            status: status
+            status: finalStatus
         });
 
         await newUser.save();
