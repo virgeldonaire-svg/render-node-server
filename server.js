@@ -213,11 +213,11 @@ app.get('/users', async (req, res) => {
 
 app.post('/createTravelPlan', async (req, res) => {
     try {
-        const {email, name, location, type, date, time, status} = req.body;
+        const {email, name, location, type, date, time, status, stay_duration} = req.body;
 
         const newtravelPlan = new travelPlan({
             //phoneNumber is included to link it to a specific account
-            email, name, location, type, date, time, status
+            email, name, location, type, date, time, status, stay_duration
         });
         await newtravelPlan.save();
         res.status(201).json({ status: "success" });
@@ -273,7 +273,7 @@ app.get('/accommodation', async (req, res) => {
 
 app.post('/reservations', async (req, res) => {
     try {
-        const{business_name, user_name, uid, reservation_date, reservation_time, number_of_guest, special_request, estimated_price} = req.body;
+        const{business_name, user_name, uid, reservation_date, reservation_time, number_of_guest, special_request, estimated_price, stay_duration} = req.body;
 
         const newReservation = new reservations({
             business_name,
@@ -283,7 +283,8 @@ app.post('/reservations', async (req, res) => {
             reservation_time,
             number_of_guest,
             special_request,
-            estimated_price
+            estimated_price, 
+            stay_duration
         });
         await newReservation.save();
         console.log("reservation sent waiting for response ", user_name);
