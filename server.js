@@ -37,6 +37,7 @@ const reservationsSchema = new mongoose.Schema({
     number_of_guest: Number,
     special_request: String,
     status: {type: String, default: 'Pending'},
+    stay_duration: Number,
     estimated_price: String
 })
 
@@ -58,7 +59,8 @@ const travelPlanSchema = new mongoose.Schema({
     type: String,
     date: String,
     time: String,
-    status: String
+    status: String,
+    stay_duration: Number
 });
 
 const BusinessSchema = new mongoose.Schema({
